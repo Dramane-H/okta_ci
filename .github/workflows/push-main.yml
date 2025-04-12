@@ -1,7 +1,7 @@
 name: Prod Build
 on:
   push:
-    branches: [ main ]
+    branches: [ feat/dev ]
 jobs:
   prod_build:
     runs-on: ubuntu-latest
