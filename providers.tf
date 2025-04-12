@@ -10,27 +10,30 @@ terraform {
       version = "5.94.1"
     }
   }
+
+  backend "s3" {
+    bucket         = "atko-okta-terraform-dev-bucket"
+    key            = "terraform/state"
+    region         = "eu-west-3"
+    use_lockfile = true  # Enables native S3 state locking
+  }
 }
 
 provider "okta" {
-  org_name = "[ORG NAME e.g. dev-123456]"
-  base_url = "[okta.com|oktapreview.com]"
-  client_id = "[APP CLIENT_ID]"
-  private_key_id = "[PRIVATE KEY ID - KID]"
-  private_key = "[PRIVATE KEY]"
-  scopes = "[COMMA,SEPARATED,SCOPE,VALUES]"
-  # Configuration options
+  org_name = var.okta_org_name
+  base_url = var.okta_base_url
+  client_id = var.okta_client_id
+  private_key_id = var.okta_private_key_id
+  private_key = var.okta_private_key
+  okta_secretm  = var.okta_secretm
+  okta_scopes = var.okta_scopes
 }
 
 
-backend "s3" {
-  bucket         = "your-terraform-state-bucket"
-  key            = "terraform/state"
-  region         = "us-west-2"
-  dynamodb_table = "terraform-lock-table"
-}
+
 
 
 provider "aws" {
   # Configuration options
+  region = "eu-west-3"
 }

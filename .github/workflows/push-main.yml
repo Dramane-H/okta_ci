@@ -1,0 +1,52 @@
+name: Prod Build
+on:
+  push:
+    branches: [ main ]
+jobs:
+  prod_build:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      TF_LOG: INFO
+      TF_INPUT: false
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # Checkout the GitHub Actions runner
+      - name: Checkout
+        uses: actions/checkout@v4
+      # Get AWS Credentials via OIDC
+      - name: Configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          audience: sts.amazonaws.com
+      # Install Terraform CLI
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8
+      # Run Terraform commands
+      - name: Terraform Init
+        id: init
+        env:
+          TF_VAR_AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+          TF_VAR_OKTA_ORG_NAME: ${{ vars.OKTA_ORG_NAME }}
+          TF_VAR_OKTA_BASE_URL: ${{ vars.OKTA_BASE_URL }}
+          TF_VAR_OKTA_CLIENT_ID: ${{ vars.OKTA_CLIENT_ID }}
+          TF_VAR_OKTA_PRIVATE_KEY_ID: ${{ vars.OKTA_PRIVATE_KEY_ID }}
+          TF_VAR_OKTA_PRIVATE_KEY: ${{ vars.OKTA_PRIVATE_KEY }}
+          TF_VAR_OKTA_SECRETM: ${{ vars.OKTA_SECRETM }}
+          TF_VAR_OKTA_SCOPES: ${{ vars.OKTA_SCOPES}}
+
+        run: terraform -chdir="terraform" init -backend-config=backend-prod.conf
+      - name: Terraform Plan
+        id: plan
+        run: terraform -chdir="terraform" plan -var-file=vars-prod.tfvars
+      - name: Terraform Apply
+        id: apply
+        run: terraform -chdir="terraform" apply -auto-approve -var-file=vars-prod.tfvars
